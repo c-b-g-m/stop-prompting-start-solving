@@ -802,10 +802,11 @@
   }
 
   function selectCard(patternId) {
-    if (state.sorted[patternId]) return;
     state.selectedPatternId = patternId;
     document.querySelectorAll('.pattern-card').forEach(c => {
-      c.classList.toggle('selected', c.dataset.patternId === patternId && !state.sorted[patternId]);
+      const isMatch = c.dataset.patternId === patternId;
+      const isInteractive = !c.classList.contains('placed');
+      c.classList.toggle('selected', isMatch && isInteractive);
     });
     document.querySelectorAll('.bucket').forEach(b => b.classList.add('armed'));
   }
@@ -817,19 +818,59 @@
   }
 
   function placePatternInBucket(patternId, tier) {
+    const prevTier = state.sorted[patternId];
+
+    if (prevTier === tier) {
+      state.selectedPatternId = null;
+      document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('selected'));
+      document.querySelectorAll('.bucket').forEach(b => b.classList.remove('armed'));
+      return;
+    }
+
+    if (prevTier) {
+      const oldBucket = document.querySelector(`.bucket-cards[data-bucket-cards="${prevTier}"]`);
+      const oldCard = oldBucket && oldBucket.querySelector(`.pattern-card[data-pattern-id="${patternId}"]`);
+      if (oldCard) oldCard.remove();
+    } else {
+      const deckCard = document.querySelector(`.pattern-deck .pattern-card[data-pattern-id="${patternId}"]`);
+      if (deckCard) deckCard.classList.add('placed');
+    }
+
     state.sorted[patternId] = tier;
     state.selectedPatternId = null;
-    const card = document.querySelector(`.pattern-deck .pattern-card[data-pattern-id="${patternId}"]`);
-    if (card) card.classList.add('placed');
+
     const bucketCards = document.querySelector(`.bucket-cards[data-bucket-cards="${tier}"]`);
     const pattern = state.patterns.find(p => p.id === patternId);
     const bucketCard = document.createElement('div');
     bucketCard.className = 'pattern-card';
-    bucketCard.textContent = pattern.description;
     bucketCard.dataset.patternId = patternId;
+    bucketCard.draggable = true;
+    bucketCard.textContent = pattern.description;
+    bucketCard.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectCard(patternId);
+    });
+    bucketCard.addEventListener('dragstart', (e) => {
+      state.selectedPatternId = patternId;
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', patternId);
+      }
+      bucketCard.classList.add('dragging');
+      document.querySelectorAll('.bucket').forEach(b => b.classList.add('armed'));
+    });
+    bucketCard.addEventListener('dragend', () => {
+      bucketCard.classList.remove('dragging');
+      document.querySelectorAll('.bucket').forEach(b => {
+        b.classList.remove('armed');
+        b.classList.remove('drag-over');
+      });
+    });
     bucketCards.appendChild(bucketCard);
+
     document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('selected'));
     document.querySelectorAll('.bucket').forEach(b => b.classList.remove('armed'));
+
     const allSorted = state.patterns.every(p => state.sorted[p.id]);
     document.getElementById('btn-score').disabled = !allSorted;
   }
