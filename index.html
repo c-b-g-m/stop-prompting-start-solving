@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Mirror — Pattern recognition for your week</title>
+<meta name="description" content="Talk about your week. See the patterns hiding in plain sight." />
+<style>
+  :root {
+    --bg:        #0A0A0F;
+    --bg-2:      #111118;
+    --bg-card:   #15151D;
+    --accent:    #9B87F5;
+    --accent-2:  #6BD0BC;
+    --warn:      #FF8A8A;
+    --warn-dim:  rgba(255,138,138,0.55);
+    --text:      #EDEEF0;
+    --text-dim:  rgba(237,238,240,0.72);
+    --text-mute: rgba(237,238,240,0.45);
+    --border:    rgba(237,238,240,0.10);
+    --pad-x:     96px;
+    --pad-y:     80px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .top-mark {
+    position: fixed; top: 24px; left: 32px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    z-index: 10;
+  }
+  .top-mark .dot { color: var(--accent); }
+
+  main {
+    position: relative; z-index: 2;
+    min-height: 100vh;
+    padding: var(--pad-y) var(--pad-x);
+    padding-top: calc(var(--pad-y) + 32px);
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  .section {
+    display: none;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease-out;
+  }
+  .section.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .h-display {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 56px;
+    color: var(--text);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 24px 0;
+  }
+  .h-section {
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 38px;
+    color: var(--text);
+    line-height: 1.15;
+    margin: 0 0 18px 0;
+  }
+  .accent-text { color: var(--accent); }
+
+  .body-copy {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--text-dim);
+    margin: 0 0 14px 0;
+  }
+  .body-small { font-size: 15px; color: var(--text-mute); }
+
+  .btn {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    border: none;
+    cursor: pointer;
+    padding: 14px 24px;
+    border-radius: 6px;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-mute); }
+  .link-soft {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text-mute);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    background: none; border: none;
+    padding: 0;
+  }
+  .link-soft:hover { color: var(--accent); }
+
+  #intro .actions { display: flex; flex-direction: column; align-items: flex-start; margin-top: 12px; }
+  #intro .footer-note { margin-top: 40px; font-size: 13px; color: var(--text-mute); max-width: 580px; }
+
+  #recording { align-items: center; text-align: center; }
+  #recording .h-section { text-align: center; }
+  .mic-button {
+    width: 144px; height: 144px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+    margin: 28px 0;
+    position: relative;
+  }
+  .mic-button:hover { border-color: var(--accent); }
+  .mic-button.recording { border-color: var(--accent); background: rgba(155,135,245,0.08); }
+  .mic-button.recording::before {
+    content: ""; position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    opacity: 0.4;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.45; }
+    50% { transform: scale(1.06); opacity: 0.15; }
+  }
+  .mic-icon { width: 52px; height: 52px; color: var(--text-dim); }
+  .mic-button.recording .mic-icon { color: var(--accent); }
+  .timer {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 28px; color: var(--text-dim); margin: 12px 0;
+  }
+  .timer.warning { color: var(--accent); }
+  .recording-hint { color: var(--text-mute); max-width: 520px; text-align: center; margin: 0 auto 20px; }
+
+  .text-input-wrap {
+    width: 100%; max-width: 720px;
+    display: none; flex-direction: column; align-items: stretch;
+    margin: 24px 0;
+  }
+  .text-input-wrap.active { display: flex; }
+  .text-input {
+    width: 100%; min-height: 200px; padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text);
+    font-family: inherit; font-size: 17px; line-height: 1.55; resize: vertical;
+  }
+  .text-input:focus { outline: none; border-color: var(--accent); }
+  .char-count { margin-top: 6px; text-align: right; font-size: 13px; color: var(--text-mute); }
+
+  .loading-block { text-align: center; padding: 60px 0; }
+  .loading-block .h-section { text-align: center; }
+  .loading-pulse {
+    display: inline-block; margin-top: 20px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--accent-2); font-size: 13px; letter-spacing: 0.16em;
+  }
+  .loading-pulse::after {
+    content: "..."; animation: dots 1.4s steps(4, end) infinite;
+  }
+  @keyframes dots { 0%,20%{content:".";} 40%{content:"..";} 60%,100%{content:"...";} }
+
+  #game .h-section { text-align: center; }
+  #game .game-hint { text-align: center; color: var(--text-mute); margin-bottom: 32px; }
+
+  .pattern-deck {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    justify-content: center;
+    margin-bottom: 32px;
+    min-height: 80px;
+  }
+  .pattern-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 18px; max-width: 320px;
+    cursor: pointer; transition: all 0.18s ease;
+    color: var(--text-dim); font-size: 14px; line-height: 1.4; user-select: none;
+  }
+  .pattern-card:hover { border-color: var(--text-mute); color: var(--text); }
+  .pattern-card.selected { border-color: var(--accent); background: rgba(155,135,245,0.08); box-shadow: 0 0 0 3px rgba(155,135,245,0.15); }
+  .pattern-card.placed { opacity: 0.5; pointer-events: none; }
+  .pattern-card.dragging { opacity: 0.4; cursor: grabbing; }
+  .pattern-card[draggable="true"] { cursor: grab; }
+
+  .buckets {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    margin-bottom: 32px;
+  }
+  .bucket {
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 20px 14px; min-height: 200px;
+    transition: all 0.18s ease;
+    cursor: pointer;
+  }
+  .bucket:hover { border-color: var(--text-mute); }
+  .bucket.armed, .bucket.drag-over { border-color: var(--accent); border-style: solid; box-shadow: 0 0 0 3px rgba(155,135,245,0.16); }
+  .bucket-label {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600; font-size: 13px; letter-spacing: 0.18em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .bucket-label.crawl { color: var(--accent-2); }
+  .bucket-label.walk  { color: var(--accent); }
+  .bucket-label.run   { color: var(--accent); }
+  .bucket-label.notai { color: var(--text-mute); }
+  .bucket-desc { font-size: 12px; color: var(--text-mute); margin-bottom: 14px; min-height: 44px; }
+  .bucket-cards { display: flex; flex-direction: column; gap: 8px; }
+  .bucket-cards .pattern-card { max-width: 100%; font-size: 13px; padding: 10px 12px; }
+
+  .game-actions { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+
+  #results .h-section { text-align: center; }
+  .score-display { text-align: center; margin: 20px 0 36px; }
+  .score-number {
+    font-family: ui-serif, Georgia, serif;
+    font-style: italic; font-size: 84px; line-height: 1; color: var(--accent);
+  }
+  .score-label {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-mute); margin-top: 6px;
+  }
+  .diagnosis {
+    text-align: center;
+    font-family: ui-serif, Georgia, serif;
+    font-style: italic; font-size: 24px;
+    color: var(--text); max-width: 720px; margin: 0 auto 36px; line-height: 1.3;
+  }
+  .results-list { display: flex; flex-direction: column; gap: 18px; margin-bottom: 36px; }
+  .result-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px;
+    padding: 24px; position: relative;
+  }
+  .result-card.correct { border-left: 3px solid var(--accent-2); }
+  .result-card.incorrect { border-left: 3px solid var(--warn-dim); }
+  .result-card .pattern-text {
+    font-family: ui-serif, Georgia, serif; font-style: italic; font-size: 20px;
+    color: var(--text); margin: 0 0 10px 0; line-height: 1.3;
+  }
+  .result-card .verdict {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .result-card.correct .verdict { color: var(--accent-2); }
+  .result-card.incorrect .verdict { color: var(--warn-dim); }
+  .result-card .reasoning { color: var(--text-dim); font-size: 15px; margin-bottom: 14px; }
+
+  .artifact {
+    background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 18px; margin-top: 14px;
+  }
+  .artifact-title {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent-2); margin-bottom: 12px;
+  }
+  .artifact-body {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px; color: var(--text-dim); line-height: 1.5;
+    white-space: pre-wrap; word-wrap: break-word; margin-bottom: 14px;
+  }
+  .artifact-test {
+    font-family: ui-serif, Georgia, serif; font-style: italic;
+    color: var(--text-mute); font-size: 14px; margin-bottom: 14px;
+    padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .artifact-actions { display: flex; gap: 10px; }
+  .btn-copy {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 600; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    background: transparent; color: var(--accent-2); border: 1px solid var(--accent-2);
+    padding: 7px 12px; border-radius: 4px; cursor: pointer;
+  }
+  .btn-copy:hover { color: var(--text); border-color: var(--text); }
+  .btn-copy.copied { color: var(--text); border-color: var(--text); }
+
+  .results-cta { text-align: center; padding-top: 32px; border-top: 1px solid var(--border); }
+  .results-cta a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+  .privacy-note { font-size: 12px; color: var(--text-mute); text-align: center; margin-top: 20px; max-width: 580px; margin-left: auto; margin-right: auto; }
+
+  .error-banner {
+    background: rgba(255,138,138,0.08); border: 1px solid var(--warn-dim);
+    color: var(--warn); padding: 14px 18px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;
+  }
+
+  @media (max-width: 900px) {
+    :root { --pad-x: 24px; --pad-y: 56px; }
+    .top-mark { left: 24px; }
+    main { padding-top: calc(var(--pad-y) + 24px); }
+    .h-display { font-size: 36px; }
+    .h-section { font-size: 28px; }
+    .body-copy { font-size: 17px; }
+    .buckets { grid-template-columns: 1fr 1fr; }
+    .score-number { font-size: 64px; }
+    .diagnosis { font-size: 19px; }
+  }
+  @media (max-width: 540px) {
+    .buckets { grid-template-columns: 1fr; gap: 10px; }
+    .bucket { min-height: 120px; }
+    .h-display { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-mark">THE MIRROR<span class="dot"> · </span>open source</div>
+
+<main>
+
+  <section id="intro" class="section active">
+    <div class="eyebrow">The Mirror</div>
+    <h1 class="h-display">Talk about your week.<br /><span class="accent-text">See what's hiding in plain sight.</span></h1>
+    <p class="body-copy">Most professionals have problems worth solving with AI but can't see them — they're hiding in the patterns of their work.</p>
+    <p class="body-copy">Speak for 90 seconds about your last week — meetings, tasks, things that took longer than you wanted. The Mirror surfaces the recurring shapes, then plays a game with them.</p>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-start-record">Start recording →</button>
+      <button class="link-soft" id="btn-use-text">Or type instead</button>
+    </div>
+    <p class="footer-note">No account needed. Recordings are sent to OpenAI for transcription and Anthropic for analysis, then discarded. Nothing is stored. This is the open-source version of a tool built for the <em>Stop Prompting, Start Solving</em> webinar.</p>
+  </section>
+
+  <section id="recording" class="section">
+    <h2 class="h-section">Tell me about your week.</h2>
+    <p class="recording-hint">Meetings, tasks, things that took longer than expected, things you redid. Don't filter — just talk. <strong>90 seconds.</strong></p>
+
+    <button class="mic-button" id="mic-button" aria-label="Toggle recording">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="3" width="6" height="12" rx="3"></rect>
+        <path d="M5 11a7 7 0 0 0 14 0"></path>
+        <line x1="12" y1="18" x2="12" y2="22"></line>
+        <line x1="8" y1="22" x2="16" y2="22"></line>
+      </svg>
+    </button>
+    <div class="timer" id="timer">00:00</div>
+    <button class="btn btn-primary" id="btn-stop-record" style="display:none;">Stop and analyze →</button>
+    <div id="recording-error" class="error-banner" style="display:none; max-width: 580px; margin-top: 16px;"></div>
+
+    <div class="text-input-wrap" id="text-wrap">
+      <textarea
+        class="text-input"
+        id="text-input"
+        placeholder="Talk to me about your week. What did you do? What took longer than you wanted? What did you do more than once? Don't filter — just dump.">
+      </textarea>
+      <div class="char-count"><span id="char-count">0</span> characters</div>
+      <button class="btn btn-primary" id="btn-submit-text" style="margin-top: 16px;" disabled>Analyze →</button>
+    </div>
+
+    <button class="link-soft" id="btn-back-intro">← Back</button>
+  </section>
+
+  <section id="listening" class="section">
+    <div class="loading-block">
+      <h2 class="h-section">Hearing what you said<span class="accent-text">.</span></h2>
+      <div class="loading-pulse">TRANSCRIBING</div>
+      <p class="body-small" style="margin-top: 20px;">Usually 5–10 seconds.</p>
+    </div>
+  </section>
+
+  <section id="patterns" class="section">
+    <div class="loading-block">
+      <h2 class="h-section">Looking for the recurring shapes<span class="accent-text">.</span></h2>
+      <div class="loading-pulse">EXTRACTING PATTERNS</div>
+      <p class="body-small" style="margin-top: 20px;">Usually 5–10 seconds.</p>
+    </div>
+  </section>
+
+  <section id="game" class="section">
+    <div class="eyebrow">Your patterns</div>
+    <h2 class="h-section">Now <span class="accent-text">classify them</span>.</h2>
+    <p class="game-hint">Tap a card, then tap the bucket where it belongs. Get it right, unlock the artifact.</p>
+
+    <div class="pattern-deck" id="pattern-deck"></div>
+
+    <div class="buckets">
+      <div class="bucket" data-tier="crawl">
+        <div class="bucket-label crawl">Crawl</div>
+        <div class="bucket-desc">A prompt or template would solve this.</div>
+        <div class="bucket-cards" data-bucket-cards="crawl"></div>
+      </div>
+      <div class="bucket" data-tier="walk">
+        <div class="bucket-label walk">Walk</div>
+        <div class="bucket-desc">A multi-step workflow would solve this.</div>
+        <div class="bucket-cards" data-bucket-cards="walk"></div>
+      </div>
+      <div class="bucket" data-tier="run">
+        <div class="bucket-label run">Run</div>
+        <div class="bucket-desc">An automation or agent would solve this.</div>
+        <div class="bucket-cards" data-bucket-cards="run"></div>
+      </div>
+      <div class="bucket" data-tier="not-ai">
+        <div class="bucket-label notai">Not AI-ready</div>
+        <div class="bucket-desc">Needs relationship, judgment, or a process fix.</div>
+        <div class="bucket-cards" data-bucket-cards="not-ai"></div>
+      </div>
+    </div>
+
+    <div class="game-actions">
+      <button class="btn btn-ghost" id="btn-undo-sort">Reset sorting</button>
+      <button class="btn btn-primary" id="btn-score" disabled>Score me →</button>
+    </div>
+  </section>
+
+  <section id="generating" class="section">
+    <div class="loading-block">
+      <h2 class="h-section">Pulling out what you<span class="accent-text">'ve earned</span>.</h2>
+      <div class="loading-pulse">BUILDING ARTIFACTS</div>
+      <p class="body-small" style="margin-top: 20px;">Usually 8–15 seconds.</p>
+    </div>
+  </section>
+
+  <section id="results" class="section">
+    <div class="eyebrow">Your read</div>
+    <div class="score-display">
+      <div class="score-number" id="score-num">0/0</div>
+      <div class="score-label">patterns matched</div>
+    </div>
+    <div class="diagnosis" id="diagnosis"></div>
+
+    <div class="results-list" id="results-list"></div>
+
+    <div class="results-cta">
+      <p class="body-copy">The Mirror is open source. <a id="public-repo-link" href="#" target="_blank" rel="noopener noreferrer">View the repo →</a></p>
+      <p class="body-small">Tool suggestions in your artifacts are just suggestions, not prescriptions. Any modern LLM (Claude, ChatGPT, Gemini) will run these prompts. Substitute alternatives that fit your workflow.</p>
+      <div style="margin-top: 28px;">
+        <button class="btn btn-ghost" id="btn-restart">Try another week →</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ========================================================================
+  // STATE — identical logic to the branded build
+  // ========================================================================
+  const state = {
+    section: 'intro',
+    isTextMode: false,
+    transcript: '',
+    patterns: [],
+    selectedPatternId: null,
+    sorted: {},
+    results: [],
+    audioBlob: null,
+    recorder: null,
+    recordingStartTs: null,
+    recordingTimer: null,
+  };
+
+  const RECORDING_CAP_SECONDS = 90;
+  const PUBLIC_REPO_URL = 'https://github.com/c-b-g-m/stop-prompting-start-solving'; // Update post-publish
+
+  function setSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    state.section = name;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ========================================================================
+  // INTRO
+  // ========================================================================
+  document.getElementById('btn-start-record').addEventListener('click', () => {
+    state.isTextMode = false;
+    document.getElementById('text-wrap').classList.remove('active');
+    document.getElementById('mic-button').style.display = '';
+    document.getElementById('timer').style.display = '';
+    hideError();
+    setSection('recording');
+  });
+
+  document.getElementById('btn-use-text').addEventListener('click', () => {
+    state.isTextMode = true;
+    document.getElementById('text-wrap').classList.add('active');
+    document.getElementById('mic-button').style.display = 'none';
+    document.getElementById('timer').style.display = 'none';
+    document.getElementById('btn-stop-record').style.display = 'none';
+    hideError();
+    setSection('recording');
+    setTimeout(() => document.getElementById('text-input').focus(), 100);
+  });
+
+  document.getElementById('btn-back-intro').addEventListener('click', () => {
+    stopRecordingIfActive();
+    hideError();
+    setSection('intro');
+  });
+
+  // ========================================================================
+  // RECORDING
+  // ========================================================================
+  const micBtn = document.getElementById('mic-button');
+  const stopBtn = document.getElementById('btn-stop-record');
+  const errBanner = document.getElementById('recording-error');
+
+  micBtn.addEventListener('click', async () => {
+    if (!micBtn.classList.contains('recording')) {
+      await startRealRecording();
+    } else {
+      stopRealRecording();
+    }
+  });
+  stopBtn.addEventListener('click', () => stopRealRecording());
+
+  async function startRealRecording() {
+    hideError();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showError("Your browser doesn't support recording. Tap 'Or type instead' from the start screen.");
+      return;
+    }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      console.error('Mic permission error:', err);
+      showError("We couldn't access your microphone. Check browser permissions, or use the type-instead option.");
+      return;
+    }
+    const mimeType = pickSupportedMime();
+    if (!mimeType) {
+      stream.getTracks().forEach(t => t.stop());
+      showError("Your browser can't record audio in a supported format. Use the type-instead option.");
+      return;
+    }
+    const recorder = new MediaRecorder(stream, { mimeType });
+    const chunks = [];
+    recorder.addEventListener('dataavailable', (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    });
+    recorder.addEventListener('stop', async () => {
+      stream.getTracks().forEach(t => t.stop());
+      stopRecordingTimer();
+      const blob = new Blob(chunks, { type: mimeType });
+      state.audioBlob = blob;
+      micBtn.classList.remove('recording');
+      stopBtn.style.display = 'none';
+      document.getElementById('timer').textContent = '00:00';
+      document.getElementById('timer').classList.remove('warning');
+      await handleRecordedAudio(blob);
+    });
+    state.recorder = recorder;
+    recorder.start();
+    micBtn.classList.add('recording');
+    stopBtn.style.display = '';
+    startRecordingTimer();
+  }
+
+  function stopRealRecording() {
+    if (state.recorder && state.recorder.state === 'recording') {
+      try { state.recorder.stop(); } catch (e) { console.warn('Recorder stop error', e); }
+    }
+  }
+
+  function stopRecordingIfActive() {
+    if (state.recorder && state.recorder.state === 'recording') {
+      try { state.recorder.stop(); } catch (e) { /* noop */ }
+    }
+    stopRecordingTimer();
+    micBtn.classList.remove('recording');
+    stopBtn.style.display = 'none';
+    document.getElementById('timer').textContent = '00:00';
+    document.getElementById('timer').classList.remove('warning');
+  }
+
+  function pickSupportedMime() {
+    const candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+    ];
+    for (const m of candidates) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) {
+        return m;
+      }
+    }
+    return null;
+  }
+
+  function startRecordingTimer() {
+    state.recordingStartTs = Date.now();
+    state.recordingTimer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - state.recordingStartTs) / 1000);
+      const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+      const s = (elapsed % 60).toString().padStart(2, '0');
+      document.getElementById('timer').textContent = `${m}:${s}`;
+      if (elapsed >= RECORDING_CAP_SECONDS) {
+        stopRealRecording();
+      } else if (elapsed >= RECORDING_CAP_SECONDS - 15) {
+        document.getElementById('timer').classList.add('warning');
+      }
+    }, 200);
+  }
+
+  function stopRecordingTimer() {
+    if (state.recordingTimer) {
+      clearInterval(state.recordingTimer);
+      state.recordingTimer = null;
+    }
+  }
+
+  function showError(msg) {
+    errBanner.textContent = msg;
+    errBanner.style.display = '';
+  }
+  function hideError() {
+    errBanner.style.display = 'none';
+    errBanner.textContent = '';
+  }
+
+  async function handleRecordedAudio(blob) {
+    setSection('listening');
+    try {
+      const transcript = await transcribeBlob(blob);
+      state.transcript = transcript;
+      await runPatternExtraction();
+    } catch (err) {
+      console.error('Transcription failed:', err);
+      setSection('recording');
+      showError(err.message || "Transcription failed. Try again, or use the type-instead option.");
+    }
+  }
+
+  async function transcribeBlob(blob) {
+    const base64 = await blobToBase64(blob);
+    const response = await fetch('/api/transcribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audio: base64, mimeType: blob.type }),
+    });
+    let data = {};
+    try { data = await response.json(); } catch { /* keep empty */ }
+    if (!response.ok) {
+      throw new Error(data.error || `Transcribe failed (${response.status})`);
+    }
+    if (!data.transcript) throw new Error("Empty transcript. Try again.");
+    return data.transcript;
+  }
+
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result || '';
+        const idx = result.indexOf(',');
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = () => reject(new Error('Failed to read audio'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // Text input
+  const textInput = document.getElementById('text-input');
+  const charCount = document.getElementById('char-count');
+  const submitTextBtn = document.getElementById('btn-submit-text');
+  textInput.addEventListener('input', () => {
+    const len = textInput.value.length;
+    charCount.textContent = len;
+    submitTextBtn.disabled = len < 80;
+  });
+  submitTextBtn.addEventListener('click', async () => {
+    state.transcript = textInput.value.trim();
+    await runPatternExtraction();
+  });
+
+  async function runPatternExtraction() {
+    setSection('patterns');
+    try {
+      const response = await fetch('/api/extract-patterns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript: state.transcript }),
+      });
+      let data = {};
+      try { data = await response.json(); } catch { /* keep empty */ }
+      if (!response.ok) {
+        throw new Error(data.error || `Pattern extraction failed (${response.status})`);
+      }
+      if (!Array.isArray(data.patterns) || data.patterns.length < 3) {
+        throw new Error("We couldn't find enough patterns. Try again with more detail.");
+      }
+      state.patterns = data.patterns;
+      renderGame();
+      setSection('game');
+    } catch (err) {
+      console.error('Pattern extraction failed:', err);
+      setSection('recording');
+      showError(err.message || "We couldn't analyze your week. Try again.");
+    }
+  }
+
+  // ========================================================================
+  // GAME
+  // ========================================================================
+  function renderGame() {
+    state.selectedPatternId = null;
+    state.sorted = {};
+    const deck = document.getElementById('pattern-deck');
+    deck.innerHTML = '';
+    state.patterns.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'pattern-card';
+      card.dataset.patternId = p.id;
+      card.draggable = true;
+      card.textContent = p.description;
+      card.addEventListener('click', () => selectCard(p.id));
+      card.addEventListener('dragstart', (e) => {
+        if (state.sorted[p.id]) { e.preventDefault(); return; }
+        state.selectedPatternId = p.id;
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', p.id);
+        }
+        card.classList.add('dragging');
+        document.querySelectorAll('.bucket').forEach(b => b.classList.add('armed'));
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        document.querySelectorAll('.bucket').forEach(b => {
+          b.classList.remove('armed');
+          b.classList.remove('drag-over');
+        });
+      });
+      deck.appendChild(card);
+    });
+    document.querySelectorAll('.bucket').forEach(b => {
+      const fresh = b.cloneNode(true);
+      b.parentNode.replaceChild(fresh, b);
+    });
+    document.querySelectorAll('.bucket').forEach(b => {
+      b.addEventListener('click', onBucketClick);
+      b.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        b.classList.add('drag-over');
+      });
+      b.addEventListener('dragleave', () => b.classList.remove('drag-over'));
+      b.addEventListener('drop', (e) => {
+        e.preventDefault();
+        b.classList.remove('drag-over');
+        const patternId = (e.dataTransfer && e.dataTransfer.getData('text/plain')) || state.selectedPatternId;
+        if (patternId) placePatternInBucket(patternId, b.dataset.tier);
+      });
+      b.querySelector('.bucket-cards').innerHTML = '';
+    });
+    document.getElementById('btn-score').disabled = true;
+    document.getElementById('btn-undo-sort').onclick = () => renderGame();
+    document.getElementById('btn-score').onclick = onScoreClick;
+  }
+
+  function selectCard(patternId) {
+    if (state.sorted[patternId]) return;
+    state.selectedPatternId = patternId;
+    document.querySelectorAll('.pattern-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.patternId === patternId && !state.sorted[patternId]);
+    });
+    document.querySelectorAll('.bucket').forEach(b => b.classList.add('armed'));
+  }
+
+  function onBucketClick(e) {
+    if (!state.selectedPatternId) return;
+    const tier = e.currentTarget.dataset.tier;
+    placePatternInBucket(state.selectedPatternId, tier);
+  }
+
+  function placePatternInBucket(patternId, tier) {
+    state.sorted[patternId] = tier;
+    state.selectedPatternId = null;
+    const card = document.querySelector(`.pattern-deck .pattern-card[data-pattern-id="${patternId}"]`);
+    if (card) card.classList.add('placed');
+    const bucketCards = document.querySelector(`.bucket-cards[data-bucket-cards="${tier}"]`);
+    const pattern = state.patterns.find(p => p.id === patternId);
+    const bucketCard = document.createElement('div');
+    bucketCard.className = 'pattern-card';
+    bucketCard.textContent = pattern.description;
+    bucketCard.dataset.patternId = patternId;
+    bucketCards.appendChild(bucketCard);
+    document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.bucket').forEach(b => b.classList.remove('armed'));
+    const allSorted = state.patterns.every(p => state.sorted[p.id]);
+    document.getElementById('btn-score').disabled = !allSorted;
+  }
+
+  async function onScoreClick() {
+    setSection('generating');
+    const payload = {
+      patterns: state.patterns.map(p => ({
+        id: p.id,
+        description: p.description,
+        correctTier: p.correctTier,
+        userSort: state.sorted[p.id],
+        reasoning: p.reasoning,
+      })),
+    };
+    try {
+      const response = await fetch('/api/generate-artifacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      let data = {};
+      try { data = await response.json(); } catch { /* keep empty */ }
+      if (!response.ok) throw new Error(data.error || `Artifact generation failed (${response.status})`);
+      if (!Array.isArray(data.results)) throw new Error('Malformed response from server.');
+      state.results = data.results;
+    } catch (err) {
+      console.error('Artifact generation failed:', err);
+      state.results = state.patterns.map(p => ({
+        patternId: p.id,
+        description: p.description,
+        correctTier: p.correctTier,
+        userSort: state.sorted[p.id],
+        correct: state.sorted[p.id] === p.correctTier,
+        reasoning: p.reasoning,
+        artifact: null,
+      }));
+    }
+    renderResults();
+    setSection('results');
+  }
+
+  // ========================================================================
+  // RESULTS
+  // ========================================================================
+  function renderResults() {
+    const correctCount = state.results.filter(r => r.correct).length;
+    const total = state.results.length;
+    document.getElementById('score-num').textContent = `${correctCount}/${total}`;
+    document.getElementById('diagnosis').textContent = computeDiagnosis(state.results);
+    document.getElementById('public-repo-link').href = PUBLIC_REPO_URL;
+
+    const list = document.getElementById('results-list');
+    list.innerHTML = '';
+    state.results.forEach(r => {
+      const card = document.createElement('div');
+      card.className = `result-card ${r.correct ? 'correct' : 'incorrect'}`;
+      const tierLabel = tierToLabel(r.correctTier);
+      const userLabel = tierToLabel(r.userSort);
+      const verdictText = r.correct
+        ? `✓ Matched — ${tierLabel}`
+        : `Reframe — you sorted as ${userLabel}, framework says ${tierLabel}`;
+      card.innerHTML = `
+        <div class="verdict">${escapeHtml(verdictText)}</div>
+        <div class="pattern-text">"${escapeHtml(r.description)}"</div>
+        <div class="reasoning">${escapeHtml(r.reasoning)}</div>
+      `;
+      if (r.artifact) {
+        const artifactEl = document.createElement('div');
+        artifactEl.className = 'artifact';
+        artifactEl.innerHTML = `
+          <div class="artifact-title">Your artifact — ${escapeHtml(r.artifact.title)}</div>
+          <pre class="artifact-body" data-artifact-body></pre>
+          <div class="artifact-test">${escapeHtml(r.artifact.test)}</div>
+          <div class="artifact-actions">
+            <button class="btn-copy" data-copy-target>Copy artifact</button>
+          </div>
+        `;
+        artifactEl.querySelector('[data-artifact-body]').textContent = r.artifact.body;
+        artifactEl.querySelector('[data-copy-target]').addEventListener('click', (e) => {
+          copyToClipboard(r.artifact.body, e.currentTarget);
+        });
+        card.appendChild(artifactEl);
+      }
+      list.appendChild(card);
+    });
+  }
+
+  function tierToLabel(tier) {
+    return { crawl: 'Crawl', walk: 'Walk', run: 'Run', 'not-ai': 'Not AI-ready' }[tier] || tier;
+  }
+
+  function computeDiagnosis(results) {
+    const total = results.length;
+    const correct = results.filter(r => r.correct).length;
+    const wrong = results.filter(r => !r.correct);
+    if (correct === total) return "You see the patterns. The framework is already in your head — go build something today.";
+    if (correct >= total - 1) return "Strong instincts. A few rough edges, but you're seeing the shapes.";
+    const overSorts = { crawl: 0, walk: 0, run: 0, 'not-ai': 0 };
+    wrong.forEach(r => { overSorts[r.userSort] = (overSorts[r.userSort] || 0) + 1; });
+    const top = Object.entries(overSorts).sort((a, b) => b[1] - a[1])[0];
+    if (top && top[1] >= 2) {
+      const map = {
+        run:     "You're a Run-skipper — you over-scope. Most problems should start at Crawl, not jump to automation.",
+        crawl:   "You're an under-scoper — you're calling everything a prompt. Some of these need real workflows.",
+        walk:    "You're stuck in the middle — workflow is the safe answer, but several of these were simpler or harder than that.",
+        'not-ai':"You're an over-rejector — you're too quick to call something not-AI. The framework would have built solutions for several of these.",
+      };
+      if (map[top[0]]) return map[top[0]];
+    }
+    return "Mixed signals — the framework needs a few more reps. That's what the next round is for.";
+  }
+
+  function copyToClipboard(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('copied');
+      }, 1800);
+    }).catch(() => {
+      btn.textContent = 'Copy failed';
+    });
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    state.transcript = '';
+    state.patterns = [];
+    state.sorted = {};
+    state.selectedPatternId = null;
+    state.results = [];
+    state.audioBlob = null;
+    state.recorder = null;
+    state.isTextMode = false;
+    textInput.value = '';
+    charCount.textContent = '0';
+    submitTextBtn.disabled = true;
+    hideError();
+    document.getElementById('text-wrap').classList.remove('active');
+    document.getElementById('mic-button').style.display = '';
+    document.getElementById('timer').style.display = '';
+    setSection('intro');
+  });
+</script>
+</body>
+</html>
