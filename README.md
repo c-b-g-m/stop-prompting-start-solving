@@ -1,12 +1,12 @@
-# The Mirror
+# The Solve
 
 A voice-first pattern-recognition tool for knowledge workers who want to use AI better.
 
-You speak for 90 seconds about your week. The Mirror surfaces 5–8 recurring patterns hiding in your work, then turns them into a sorting game against the **Crawl / Walk / Run** framework. For each pattern you classify correctly, the tool generates a copy-pasteable starter artifact — a prompt, a workflow doc, or a system sketch — tailored to your actual problem.
+You speak for 90 seconds about your week. The Solve surfaces 5–8 recurring patterns hiding in your work, then turns them into a sorting game against the **Crawl / Walk / Run** framework. For each pattern you classify correctly, the tool generates a copy-pasteable starter artifact — a prompt, a workflow doc, or a system sketch — tailored to your actual problem.
 
 It teaches the framework by making you apply it. The patterns are yours, the artifacts are yours, the practice is yours.
 
-The Mirror was originally built for the *Stop Prompting, Start Solving* webinar by demand AI studio. This is the open-source version — fork it, customize it, run it on your own infrastructure.
+The Solve was originally built for the *Stop Prompting, Start Solving* webinar by demand AI studio. This is the open-source version — fork it, customize it, run it on your own infrastructure.
 
 ---
 
@@ -93,7 +93,7 @@ If you run this for a webinar with 100 attendees, expect <$5 total.
 
 ## Tool suggestions are suggestions
 
-The artifacts the Mirror generates may name specific tools — Claude, ChatGPT, Zapier, Make, n8n, etc. **These are examples, not prescriptions.** Any modern LLM will run the prompts. Any modern automation platform will run the workflows. Substitute what fits your stack, your budget, your constraints.
+The artifacts The Solve generates may name specific tools — Claude, ChatGPT, Zapier, Make, n8n, etc. **These are examples, not prescriptions.** Any modern LLM will run the prompts. Any modern automation platform will run the workflows. Substitute what fits your stack, your budget, your constraints.
 
 The framework matters more than the tools.
 
@@ -120,4 +120,4 @@ MIT. See `LICENSE`.
 
 Built by [Christen George-McFerrin](https://www.linkedin.com/in/christengeorge) at [demand AI studio](https://demandai.studio) for the *Stop Prompting, Start Solving* webinar.
 
-If you use The Mirror with your team or community, I'd love to hear how it lands — christen@demandai.studio.
+If you use The Solve with your team or community, I'd love to hear how it lands — christen@demandai.studio.
